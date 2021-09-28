@@ -34,6 +34,10 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase  };
   res.render("urls_index", templateVars);
 });
+
+// parse anything after /urls/
+// load urls_show view
+// pass object templateVars to urls_view
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL
   const longUrl = urlDatabase[shortURL]
@@ -46,15 +50,31 @@ app.listen(PORT, () => {
 });
 
 app.post("/urls", (req, res) => {
+  let randomString = generateRandomString()
+  urlDatabase[randomString] = req.body.longURL
+  console.log(urlDatabase)
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  res.redirect("/urls/");         // Respond with 'Ok' (we will replace this)
 });
+
+
+//express will parse 'monkey' in the address bar
+
+app.get("/u/:jesson", (req, res) => {
+
+  const shortURL = req.params.jesson
+  longURL = urlDatabase[shortURL]
+  res.redirect(longURL)
+});
+
 
 
 function generateRandomString() {
 return Math.random().toString(36).slice(2, 8)
 
 };
+
+
 
 
 // 3 ways that the server and browser give data to each other

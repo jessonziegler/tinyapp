@@ -23,7 +23,13 @@
   <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
+        <!-- we recieve object form server
+        longURL
+        shortURL
+        -->
+        <!-- display dynamic longURL -->
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <!-- make a dynamic link with shortURL   -->
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
       </div>
     <div class="card-footer text-muted"></div>
