@@ -60,6 +60,15 @@ app.post("/urls/:shortUrl/delete", (req, res) => {
   delete urlDatabase[req.params.shortUrl];
   res.redirect("/urls");
 });
+app.post("/urls/:shortUrl/", (req, res) => {
+const longURL = req.body.longUrl
+const shortURL = req.params.shortUrl
+console.log(req.body)
+console.log(req.params)
+urlDatabase[shortURL] = longURL
+});
+
+
 
 //express will parse 'monkey' in the address bar
 
