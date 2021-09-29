@@ -15,6 +15,29 @@ const urlDatabase = {
    "hjd3hdj": "http://www.yahoo.ca"
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
+function findUserByEmail(usersDatabase, email){
+ for (let userId in usersDatabase){
+   if (usersDatabase[userId].email === email) {
+return usersDatabase[userId]
+   }
+ }
+return false
+};
+// above function does the following:
+// loops through all ids in database
+//checks if email exists and returns if it does
 
 
 app.get("/", (req, res) => {
@@ -34,9 +57,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  let username = users[req.cookies.user_id].email
   console.log('Cookies: ', req.cookies)
-
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, username: username };
   res.render("urls_index", templateVars);
 
 });
@@ -63,8 +86,8 @@ app.post("/urls", (req, res) => {
   let randomString = generateRandomString()
   urlDatabase[randomString] = req.body.longURL
   console.log(urlDatabase)
-  console.log(req.body);  // Log the POST request body to the console
-  res.redirect("/urls/");         // Respond with 'Ok' (we will replace this)
+  console.log(req.body);
+  res.redirect("/urls/");
 });
 app.post("/urls/:shortUrl/delete", (req, res) => {
   delete urlDatabase[req.params.shortUrl];
@@ -88,6 +111,30 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username", req.body.username);
   res.redirect("/urls");
 });
+
+app.post("/register", (req, res) => {
+  let randomString = generateRandomString()
+  let password = req.body.password;
+  let email = req.body.email
+  if (!email || !password){
+    return res.status(400).send("Email And Password Needed")
+  }
+  const user = findUserByEmail(users, email)
+  if (user) {
+return res.status(400).send("User Already Exists, Enter Different Email")
+  }
+
+users[randomString] = {
+    id: randomString,
+    password,
+    email
+  }
+  console.log(users)
+  res.cookie("user_id", randomString)
+  res.redirect("/urls");
+});
+
+
 
 
 app.get("/u/:jesson", (req, res) => {
