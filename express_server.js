@@ -57,8 +57,14 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let username = users[req.cookies.user_id].email
   console.log('Cookies: ', req.cookies)
+const user = users[req.cookies.user_id]
+let username
+if (user){
+username = user.username
+
+}
+
   const templateVars = { urls: urlDatabase, username: username };
   res.render("urls_index", templateVars);
 
@@ -68,6 +74,16 @@ app.get("/register", (req, res) => {
 
   res.render("urls_register", templateVars);
 });
+
+app.get("/login", (req, res) => {
+  const templateVars = { username: "" };
+
+  res.render("urls_login", templateVars);
+});
+
+
+
+
 // parse anything after /urls/
 // load urls_show view
 // pass object templateVars to urls_view
@@ -102,13 +118,15 @@ urlDatabase[shortURL] = longURL
 });
 app.post("/login",(req, res) => {
 console.log("===", req);
-  res.cookie("username", req.body.username)
+const user = findUserByEmail(users, req.body.email)
+res.cookie("user_id", user.id)
   console.log(req.body.username)
   res.redirect("/urls")
 
 });
 app.post("/logout", (req, res) => {
-  res.clearCookie("username", req.body.username);
+  res.clearCookie("username");
+  res.clearCookie("user_id")
   res.redirect("/urls");
 });
 
