@@ -40,7 +40,11 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 
 });
+app.get("/register", (req, res) => {
+  const templateVars = { username: "" };
 
+  res.render("urls_register", templateVars);
+});
 // parse anything after /urls/
 // load urls_show view
 // pass object templateVars to urls_view
