@@ -28,13 +28,15 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls", (req, res) => {
   console.log('Cookies: ', req.cookies)
 
-  const templateVars = { urls: urlDatabase  };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 
 });
@@ -45,7 +47,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL
   const longUrl = urlDatabase[shortURL]
-  const templateVars = { shortURL: shortURL, longURL: longUrl };
+  const templateVars = { shortURL: shortURL, longURL: longUrl, username: req.cookies["username"]  };
   res.render("urls_show", templateVars);
 });
 
@@ -71,10 +73,18 @@ console.log(req.body)
 console.log(req.params)
 urlDatabase[shortURL] = longURL
 });
+app.post("/login",(req, res) => {
+console.log("===", req);
+  res.cookie("username", req.body.username)
+  console.log(req.body.username)
+  res.redirect("/urls")
 
+});
+app.post("/logout", (req, res) => {
+  res.clearCookie("username", req.body.username);
+  res.redirect("/urls");
+});
 
-
-//express will parse 'monkey' in the address bar
 
 app.get("/u/:jesson", (req, res) => {
 

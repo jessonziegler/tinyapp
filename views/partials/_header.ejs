@@ -12,15 +12,23 @@
     >
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      <form method="post" action="/login">
-        <input type="text" name="username" />
-        <button class="btn btn-primary" type="submit">Submit</button>
-      </form>
     </div>
+    <% if(username){ %>
+    <h6 class="mr-sm-2">Logged In As: <%= username %></h6>
+    <form method="post" action="/logout">
+      <button class="btn btn-outline-dark" type="submit">Logout</button>
+    </form>
+    <% } else{ %>
+    <form method="post" action="/login">
+      <input type="text" name="username" />
+      <button class="btn btn-primary" type="submit">Login</button>
+      <% } %>
+    </form>
   </nav>
 </header>
