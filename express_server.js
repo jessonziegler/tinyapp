@@ -27,13 +27,16 @@ const users = {
     password: "dishwasher-funk"
   }
 }
+
+
 function findUserByEmail(usersDatabase, email){
  for (let userId in usersDatabase){
    if (usersDatabase[userId].email === email) {
-return usersDatabase[userId]
+    console.log("I found user",usersDatabase[userId])
+    return usersDatabase[userId]
    }
  }
-return false
+return false;
 };
 // above function does the following:
 // loops through all ids in database
@@ -51,32 +54,30 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, currentUser: users[req.cookies["user_id"]] }
+
+
 
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls", (req, res) => {
   console.log('Cookies: ', req.cookies)
-const user = users[req.cookies.user_id]
-let username
-if (user){
-username = user.username
+const user = users[req.cookies["user_id"]];
 
-}
 
-  const templateVars = { urls: urlDatabase, username: username };
+  const templateVars = { urls: urlDatabase, currentUser: user };
   res.render("urls_index", templateVars);
 
 });
 app.get("/register", (req, res) => {
-  const templateVars = { username: "" };
+  const templateVars = { currentUser: users[req.cookies["user_id"]]};
 
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = { username: "" };
+  const templateVars = { currentUser: users[req.cookies["user_id"]]};
 
   res.render("urls_login", templateVars);
 });
@@ -90,7 +91,7 @@ app.get("/login", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL
   const longUrl = urlDatabase[shortURL]
-  const templateVars = { shortURL: shortURL, longURL: longUrl, username: req.cookies["username"]  };
+  const templateVars = { shortURL: shortURL, longURL: longUrl, currentUser: users[req.cookies["user_id"]]}
   res.render("urls_show", templateVars);
 });
 
@@ -117,15 +118,25 @@ console.log(req.params)
 urlDatabase[shortURL] = longURL
 });
 app.post("/login",(req, res) => {
-console.log("===", req);
 const user = findUserByEmail(users, req.body.email)
-res.cookie("user_id", user.id)
-  console.log(req.body.username)
+if (!user) {
+  return res.status(403).send("Email Can't Be Found")
+}
+// if user is found but password wrong send 403
+const passwordFromForm = req.body.password
+// were checking that password from request matches password from database fo that user
+if (passwordFromForm === user.password ) {
+  res.cookie("user_id", user.id)
   res.redirect("/urls")
+} else {
+res.status(403).send("Wrong Password")
+}
+
+
+
 
 });
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
   res.clearCookie("user_id")
   res.redirect("/urls");
 });
