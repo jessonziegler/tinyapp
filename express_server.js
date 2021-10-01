@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
+const salt = bcrypt.genSaltSync(10);
 app.use(cookieParser());
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -170,7 +172,7 @@ app.post("/login", (req, res) => {
   // if user is found but password wrong send 403
   const passwordFromForm = req.body.password;
   // were checking that password from request matches password from database fo that user
-  if (passwordFromForm === user.password) {
+  if (bcrypt.compareSync(passwordFromForm, user.password)) {
     res.cookie("user_id", user.id);
     res.redirect("/urls");
   } else {
@@ -193,10 +195,10 @@ app.post("/register", (req, res) => {
   if (user) {
     return res.status(400).send("User Already Exists, Enter Different Email");
   }
-
+  const hashedPassword = bcrypt.hashSync(password, salt);
   users[randomString] = {
     id: randomString,
-    password,
+    password: hashedPassword,
     email,
   };
   console.log(users);
