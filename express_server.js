@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const findUserByEmail = require("./helper");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
 var cookieSession = require("cookie-session");
@@ -30,24 +31,15 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: bcrypt.hashSync("purple-monkey-dinosaur", salt),
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: bcrypt.hashSync("dishwasher-funk", salt),
   },
 };
 
-function findUserByEmail(usersDatabase, email) {
-  for (let userId in usersDatabase) {
-    if (usersDatabase[userId].email === email) {
-      console.log("I found user", usersDatabase[userId]);
-      return usersDatabase[userId];
-    }
-  }
-  return false;
-}
 // above function does the following:
 // loops through all ids in database
 //checks if email exists and returns if it does
@@ -124,7 +116,11 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-
+// find out which user id belongs to short url
+//will do that by checking database
+//then compare that short url user id to the cookies id
+//if they match they are allowed to view page
+//if they don't send 403 error saying no permission
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
