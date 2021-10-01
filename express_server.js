@@ -9,12 +9,16 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-   "hjd3hdj": "http://www.yahoo.ca"
+  const urlDatabase = {
+    b6UTxQ: {
+        longURL: "https://www.tsn.ca",
+        userID: "aJ48lW"
+    },
+    i3BoGr: {
+        longURL: "https://www.google.ca",
+        userID: "aJ48lW"
+    }
 };
-
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -42,6 +46,18 @@ return false;
 // loops through all ids in database
 //checks if email exists and returns if it does
 
+function filterUrlsDatabaseByUser(urlDatabase, userID ) {
+  let outputObject = {}
+  for (let key in urlDatabase) {
+if (urlDatabase[key].userID === userID) {
+  outputObject[key] = urlDatabase[key]
+}
+
+}
+return outputObject;
+}
+
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -55,18 +71,21 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { urls: urlDatabase, currentUser: users[req.cookies["user_id"]] }
-
-
-
+if (!users[req.cookies["user_id"]]) {
+  res.redirect("/login");
+} else {
   res.render("urls_new", templateVars);
+
+}
+
 });
 
 app.get("/urls", (req, res) => {
   console.log('Cookies: ', req.cookies)
 const user = users[req.cookies["user_id"]];
-
-
-  const templateVars = { urls: urlDatabase, currentUser: user };
+console.log("url database", urlDatabase)
+let outputObject = filterUrlsDatabaseByUser(urlDatabase, req.cookies["user_id"])
+  const templateVars = { urls: outputObject, currentUser: user };
   res.render("urls_index", templateVars);
 
 });
@@ -90,7 +109,7 @@ app.get("/login", (req, res) => {
 // pass object templateVars to urls_view
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL
-  const longUrl = urlDatabase[shortURL]
+  const longUrl = urlDatabase[shortURL].longURL
   const templateVars = { shortURL: shortURL, longURL: longUrl, currentUser: users[req.cookies["user_id"]]}
   res.render("urls_show", templateVars);
 });
@@ -101,11 +120,20 @@ app.listen(PORT, () => {
 
 app.post("/urls", (req, res) => {
   let randomString = generateRandomString()
-  urlDatabase[randomString] = req.body.longURL
-  console.log(urlDatabase)
-  console.log(req.body);
+
+  if (!users[req.cookies["user_id"]]) {
+  return res.status(403).send("You Are Not Logged In")
+
+  } else {
+    urlDatabase[randomString] = {longURL: req.body.longURL, userID: req.cookies["user_id"]  }
+    console.log(urlDatabase)
+    console.log(req.body);
   res.redirect("/urls/");
+  }
 });
+
+
+
 app.post("/urls/:shortUrl/delete", (req, res) => {
   delete urlDatabase[req.params.shortUrl];
   res.redirect("/urls");
@@ -113,9 +141,11 @@ app.post("/urls/:shortUrl/delete", (req, res) => {
 app.post("/urls/:shortUrl/", (req, res) => {
 const longURL = req.body.longUrl
 const shortURL = req.params.shortUrl
+urlDatabase[shortURL]  = {longURL: req.body.longUrl, userID: req.cookies["user_id"]  }
+res.redirect("/urls");
+
 console.log(req.body)
 console.log(req.params)
-urlDatabase[shortURL] = longURL
 });
 app.post("/login",(req, res) => {
 const user = findUserByEmail(users, req.body.email)
@@ -169,7 +199,16 @@ users[randomString] = {
 app.get("/u/:jesson", (req, res) => {
 
   const shortURL = req.params.jesson
-  longURL = urlDatabase[shortURL]
+  if (!(urlDatabase[shortURL])) {
+  res.status(400).send("Short Url Does Not Exist In Database")
+
+  }
+  longURL = urlDatabase[shortURL].longURL
+  if  (!(longURL.substring(0, 7) === 'http://')) {
+  console.log("inside statement", longURL )
+  longURL = "http://" + longURL
+  }
+
   res.redirect(longURL)
 });
 
