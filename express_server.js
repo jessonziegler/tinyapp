@@ -1,10 +1,10 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 const findUserByEmail = require("./helper");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
-var cookieSession = require("cookie-session");
+let cookieSession = require("cookie-session");
 const salt = bcrypt.genSaltSync(10);
 app.use(cookieParser());
 const bodyParser = require("body-parser");
@@ -40,10 +40,6 @@ const users = {
   },
 };
 
-// above function does the following:
-// loops through all ids in database
-//checks if email exists and returns if it does
-
 function filterUrlsDatabaseByUser(urlDatabase, userID) {
   let outputObject = {};
   for (let key in urlDatabase) {
@@ -77,7 +73,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  //console.log("Cookies: ", req.cookies);
   const user = users[req.session.user_id];
   if (!user) {
     return res.redirect("/login");
@@ -99,28 +94,31 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-// parse anything after /urls/
-// load urls_show view
-// pass object templateVars to urls_view
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.session.user_id];
+  const shortURL = req.params.shortURL;
+  if (!urlDatabase[shortURL]) {
+    return res.status(403).send("URL Does Not Exist");
+  }
+  const longUrl = urlDatabase[shortURL].longURL;
   if (!user) {
     return res.redirect("/login");
   }
-  const shortURL = req.params.shortURL;
-  const longUrl = urlDatabase[shortURL].longURL;
+  let canEdit = true;
+  if (user.id !== urlDatabase[shortURL].userID) {
+    res.status(403);
+    canEdit = false;
+  }
+
   const templateVars = {
+    canEdit,
     shortURL: shortURL,
     longURL: longUrl,
     currentUser: users[req.session.user_id],
   };
   res.render("urls_show", templateVars);
 });
-// find out which user id belongs to short url
-//will do that by checking database
-//then compare that short url user id to the cookies id
-//if they match they are allowed to view page
-//if they don't send 403 error saying no permission
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -170,9 +168,8 @@ app.post("/login", (req, res) => {
   }
   // if user is found but password wrong send 403
   const passwordFromForm = req.body.password;
-  // were checking that password from request matches password from database fo that user
+  // were checking that password from request matches password from database for that user
   if (bcrypt.compareSync(passwordFromForm, user.password)) {
-    //res.cookie("user_id", user.id);
     req.session.user_id = user.id;
 
     res.redirect("/urls");
@@ -204,7 +201,6 @@ app.post("/register", (req, res) => {
     email,
   };
   console.log(users);
-  //res.cookie("user_id", randomString);
   req.session.user_id = randomString;
 
   res.redirect("/urls");

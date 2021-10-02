@@ -19,7 +19,6 @@ describe("findUserByEmail", function () {
   it("should return a user with valid email", function () {
     const user = findUserByEmail(testUsers, "user@example.com");
     console.log(user);
-    //const user = "userRandomID";
     const expectedOutput = "userRandomID";
     assert.deepEqual(user, {
       id: "userRandomID",

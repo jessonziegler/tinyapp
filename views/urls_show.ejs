@@ -27,14 +27,19 @@
           Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a>
         </p>
       </div>
+      <% if (canEdit) {%>
       <div class="card-footer text-muted">
         <h2>Edit</h2>
         <form action="/urls/<%= shortURL %>/" method="post">
-          New URL: <input type="text" name="longUrl" />
+          New URL: <input type="text" name="longUrl" value="<%= longURL %>" />
           <button class="btn btn-primary" type="submit">Submit</button>
         </form>
       </div>
     </div>
+    <% } else { %>
+    <h6>You are not authorized to edit URL!</h6>
+    <% } %>
+
     <a href="#">Make a new URL</a>
 
     <!-- Bootstrap JS -->
