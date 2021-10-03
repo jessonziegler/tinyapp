@@ -50,15 +50,19 @@ function filterUrlsDatabaseByUser(urlDatabase, userID) {
   return outputObject;
 }
 
+function generateRandomString() {
+  return Math.random().toString(36).slice(2, 8);
+}
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
+// app.get("/hello", (req, res) => {
+//   res.send("<html><body>Hello <b>World</b></body></html>\n");
+// });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -117,10 +121,6 @@ app.get("/urls/:shortURL", (req, res) => {
     currentUser: users[req.session.user_id],
   };
   res.render("urls_show", templateVars);
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
 });
 
 app.post("/urls", (req, res) => {
@@ -206,23 +206,26 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-app.get("/u/:jesson", (req, res) => {
-  const shortURL = req.params.jesson;
+app.get("/u/:shortUrl", (req, res) => {
+  const shortURL = req.params.shortUrl;
   if (!urlDatabase[shortURL]) {
     res.status(400).send("Short Url Does Not Exist In Database");
   }
   longURL = urlDatabase[shortURL].longURL;
-  if (!(longURL.substring(0, 7) === "http://")) {
-    console.log("inside statement", longURL);
+
+  if (
+    longURL.substring(0, 4) !== "http" &&
+    longURL.substring(0, 5) !== "https"
+  ) {
     longURL = "http://" + longURL;
   }
 
   res.redirect(longURL);
 });
 
-function generateRandomString() {
-  return Math.random().toString(36).slice(2, 8);
-}
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
 // 3 ways that the server and browser give data to each other
 // 1- req.params: server reads browser url request
