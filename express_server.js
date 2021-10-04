@@ -5,9 +5,9 @@ const findUserByEmail = require("./helper");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
 let cookieSession = require("cookie-session");
+const bodyParser = require("body-parser");
 const salt = bcrypt.genSaltSync(10);
 app.use(cookieParser());
-const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cookieSession({
@@ -40,6 +40,7 @@ const users = {
   },
 };
 
+//Function below will return URLS from that user
 function filterUrlsDatabaseByUser(urlDatabase, userID) {
   let outputObject = {};
   for (let key in urlDatabase) {
@@ -50,6 +51,7 @@ function filterUrlsDatabaseByUser(urlDatabase, userID) {
   return outputObject;
 }
 
+// Function below will generate random alphanumerical string
 function generateRandomString() {
   return Math.random().toString(36).slice(2, 8);
 }
@@ -57,12 +59,6 @@ function generateRandomString() {
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -86,16 +82,71 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: outputObject, currentUser: user };
   res.render("urls_index", templateVars);
 });
+
+app.post("/urls", (req, res) => {
+  let randomString = generateRandomString();
+
+  if (!users[req.session.user_id]) {
+    return res.status(403).send("You Are Not Logged In");
+  } else {
+    urlDatabase[randomString] = {
+      longURL: req.body.longURL,
+      userID: req.session.user_id,
+    };
+    console.log(urlDatabase);
+    console.log(req.body);
+    res.redirect("/urls/");
+  }
+});
+
 app.get("/register", (req, res) => {
   const templateVars = { currentUser: users[req.session.user_id] };
 
   res.render("urls_register", templateVars);
 });
 
+app.post("/register", (req, res) => {
+  let randomString = generateRandomString();
+  let password = req.body.password;
+  let email = req.body.email;
+  if (!email || !password) {
+    return res.status(400).send("Email And Password Needed");
+  }
+  const user = findUserByEmail(users, email);
+  if (user) {
+    return res.status(400).send("User Already Exists, Enter Different Email");
+  }
+  const hashedPassword = bcrypt.hashSync(password, salt);
+  users[randomString] = {
+    id: randomString,
+    password: hashedPassword,
+    email,
+  };
+  console.log(users);
+  req.session.user_id = randomString;
+
+  res.redirect("/urls");
+});
+
 app.get("/login", (req, res) => {
   const templateVars = { currentUser: users[req.session.user_id] };
 
   res.render("urls_login", templateVars);
+});
+
+app.post("/login", (req, res) => {
+  const user = findUserByEmail(users, req.body.email);
+  if (!user) {
+    return res.status(403).send("Email Can't Be Found");
+  }
+  const passwordFromForm = req.body.password;
+  if (bcrypt.compareSync(passwordFromForm, user.password)) {
+    req.session.user_id = user.id;
+
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Wrong Password");
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -123,29 +174,6 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  let randomString = generateRandomString();
-
-  if (!users[req.session.user_id]) {
-    return res.status(403).send("You Are Not Logged In");
-  } else {
-    urlDatabase[randomString] = {
-      longURL: req.body.longURL,
-      userID: req.session.user_id,
-    };
-    console.log(urlDatabase);
-    console.log(req.body);
-    res.redirect("/urls/");
-  }
-});
-
-app.post("/urls/:shortUrl/delete", (req, res) => {
-  if (urlDatabase[req.params.shortUrl].userID !== req.session.user_id) {
-    return res.status(403).send("Unauthorized");
-  }
-  delete urlDatabase[req.params.shortUrl];
-  res.redirect("/urls");
-});
 app.post("/urls/:shortUrl", (req, res) => {
   if (urlDatabase[req.params.shortUrl].userID !== req.session.user_id) {
     return res.status(403).send("Unauthorized");
@@ -161,47 +189,9 @@ app.post("/urls/:shortUrl", (req, res) => {
   console.log(req.body);
   console.log(req.params);
 });
-app.post("/login", (req, res) => {
-  const user = findUserByEmail(users, req.body.email);
-  if (!user) {
-    return res.status(403).send("Email Can't Be Found");
-  }
-  // if user is found but password wrong send 403
-  const passwordFromForm = req.body.password;
-  // were checking that password from request matches password from database for that user
-  if (bcrypt.compareSync(passwordFromForm, user.password)) {
-    req.session.user_id = user.id;
 
-    res.redirect("/urls");
-  } else {
-    res.status(403).send("Wrong Password");
-  }
-});
 app.post("/logout", (req, res) => {
   req.session = null;
-
-  res.redirect("/urls");
-});
-
-app.post("/register", (req, res) => {
-  let randomString = generateRandomString();
-  let password = req.body.password;
-  let email = req.body.email;
-  if (!email || !password) {
-    return res.status(400).send("Email And Password Needed");
-  }
-  const user = findUserByEmail(users, email);
-  if (user) {
-    return res.status(400).send("User Already Exists, Enter Different Email");
-  }
-  const hashedPassword = bcrypt.hashSync(password, salt);
-  users[randomString] = {
-    id: randomString,
-    password: hashedPassword,
-    email,
-  };
-  console.log(users);
-  req.session.user_id = randomString;
 
   res.redirect("/urls");
 });
@@ -223,11 +213,14 @@ app.get("/u/:shortUrl", (req, res) => {
   res.redirect(longURL);
 });
 
+app.post("/urls/:shortUrl/delete", (req, res) => {
+  if (urlDatabase[req.params.shortUrl].userID !== req.session.user_id) {
+    return res.status(403).send("Unauthorized");
+  }
+  delete urlDatabase[req.params.shortUrl];
+  res.redirect("/urls");
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-// 3 ways that the server and browser give data to each other
-// 1- req.params: server reads browser url request
-//2- req.body how you get form data back to server
-// 3- templateVars its how the server gives browser info
